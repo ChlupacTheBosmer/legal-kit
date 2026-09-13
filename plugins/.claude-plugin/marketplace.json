@@ -1,0 +1,11 @@
+{
+  "name": "law-local",
+  "owner": { "name": "chlup" },
+  "plugins": [
+    {
+      "name": "pravo-skills-cz",
+      "source": "./pravo-skills-cz",
+      "description": "Czech legal workflows (contract review, NDA triage, compliance, vendor KYC, negotiation prep, risk assessment, template responses) wired to the lex MCP server. Adapted from DirectCase pravo-skills (MIT)."
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "lex-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "MCP server exposing official primary legal sources: e-Sbírka (Czech Collection of Laws) and EUR-Lex/CELLAR (EU law).",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "selftest": "node selftest.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^4.4.3"
+  }
+}

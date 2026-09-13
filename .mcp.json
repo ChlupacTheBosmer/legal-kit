@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "lex": {
+      "command": "node",
+      "args": [
+        "mcp-servers/lex/server.js"
+      ],
+      "env": {
+        "LEX_MCP_CACHE_TTL_MS": "43200000",
+        "NODE_NO_WARNINGS": "1"
+      }
+    }
+  }
+}

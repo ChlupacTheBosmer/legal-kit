@@ -1,0 +1,58 @@
+name: check
+
+# Deliberately does NOT run the end-to-end suite.
+#
+# `make test` calls nine live government registries. Firing that at every push
+# from CI would be a poor way to treat free public infrastructure, and a red
+# build would usually mean a ministry was having a slow morning rather than that
+# anything here is broken. Run `make test` locally instead.
+#
+# What CI is good for here is the part that is deterministic: does it parse, does
+# it install, does the server come up, and is anyone about to publish something
+# personal.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install the server's dependencies
+        run: npm install --no-audit --no-fund
+        working-directory: mcp-servers/lex
+
+      - name: Every script parses
+        shell: bash
+        run: |
+          shopt -s globstar nullglob
+          for f in setup/**/*.mjs tools/**/*.mjs mcp-servers/lex/*.js mcp-servers/lex/lib/*.js; do
+            node --check "$f"
+          done
+          echo "all scripts parse"
+
+      - name: The MCP server starts and registers its tools
+        run: node .github/scripts/tools-list.mjs
+
+      - name: Nothing personal is being published
+        run: node setup/check-private.mjs
+
+      - name: No leftover personal content is tracked
+        shell: bash
+        run: |
+          # A fork that carries someone's profile or work product is the one
+          # failure mode that cannot be undone after the fact.
+          if git ls-files | grep -qE '^(PROFILE\.md|sources/|vault/(00-Inbox|10-Topics|20-Instruments|30-Memos)/.+\.md)'; then
+            echo "Personal files are tracked. See .gitignore and 'make check-private'."
+            exit 1
+          fi
+          echo "clean"
