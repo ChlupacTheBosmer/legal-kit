@@ -21,12 +21,45 @@ import { createHash } from "node:crypto";
 import { basename } from "node:path";
 import { homedir } from "node:os";
 
-const cfg = JSON.parse(await readFile(`${homedir()}/.claude.json`, "utf8"));
-const env = cfg.mcpServers?.zotero?.env;
-if (!env?.ZOTERO_API_KEY) throw new Error("No zotero MCP entry with ZOTERO_API_KEY in ~/.claude.json");
-const KEY = env.ZOTERO_API_KEY;
-const LIB = env.ZOTERO_LIBRARY_ID;
-const TYPE = env.ZOTERO_LIBRARY_TYPE === "group" ? "groups" : "users";
+/**
+ * Credentials, in order of preference:
+ *   1. the environment (ZOTERO_API_KEY, ZOTERO_LIBRARY_ID, ZOTERO_LIBRARY_TYPE)
+ *   2. a `zotero` MCP entry in ~/.claude.json, so the key lives in one place if
+ *      you also run the Zotero MCP server
+ * Nothing is sent anywhere except api.zotero.org.
+ */
+async function credentials() {
+  if (process.env.ZOTERO_API_KEY) {
+    return {
+      key: process.env.ZOTERO_API_KEY,
+      lib: process.env.ZOTERO_LIBRARY_ID,
+      type: process.env.ZOTERO_LIBRARY_TYPE,
+    };
+  }
+  try {
+    const cfg = JSON.parse(await readFile(`${homedir()}/.claude.json`, "utf8"));
+    const env = cfg.mcpServers?.zotero?.env;
+    if (env?.ZOTERO_API_KEY) {
+      return { key: env.ZOTERO_API_KEY, lib: env.ZOTERO_LIBRARY_ID, type: env.ZOTERO_LIBRARY_TYPE };
+    }
+  } catch { /* no ~/.claude.json, or not readable */ }
+  throw new Error(
+    "No Zotero credentials.\n\n" +
+      "Set them in your shell:\n" +
+      "  export ZOTERO_API_KEY=...        # zotero.org/settings/keys\n" +
+      "  export ZOTERO_LIBRARY_ID=...     # your numeric user id, or the group id\n" +
+      "  export ZOTERO_LIBRARY_TYPE=user  # or 'group'\n\n" +
+      "Or add a `zotero` MCP entry with those in its `env` to ~/.claude.json.\n" +
+      "Zotero is optional: it holds commentary and articles, while legislation and\n" +
+      "case law are cited as links to the official registry via `legal_cite`."
+  );
+}
+
+const creds = await credentials();
+if (!creds.lib) throw new Error("ZOTERO_LIBRARY_ID is not set. It is your numeric user id from zotero.org/settings/keys.");
+const KEY = creds.key;
+const LIB = creds.lib;
+const TYPE = creds.type === "group" ? "groups" : "users";
 const BASE = `https://api.zotero.org/${TYPE}/${LIB}`;
 const H = { "Zotero-API-Version": "3", "Zotero-API-Key": KEY };
 

@@ -1,24 +1,63 @@
 # Drafting in Google Docs, and working from comments
 
-**Google access is already authorised.** `~/.claude_google_token.json` holds a
-refresh token with Drive and Docs scopes for your Google account — the same
-file the scientific-writer project uses. It was tested and refreshes cleanly.
-No OAuth step is needed. (An earlier note in this repo said otherwise; that was
-written before the token was found.)
+**Optional.** Nothing else in this repository needs Google. This is for the
+drafting and revision loop: push a draft into a Google Doc, read back the
+comments your colleagues leave with the text each one is anchored to, make a
+surgical edit, reply to the comment and resolve it.
 
-Two paths exist, and they are for different things:
+## Setting it up, once
+
+Three steps. The middle one is tedious and there is no way around it, because
+Google requires every application to be registered before it will issue a token.
+
+```bash
+# 1. Python libraries
+python3 -m pip install -r tools/requirements.txt
+
+# 2. Get an OAuth client secret from Google (see below)
+
+# 3. Authorise, once. Opens a browser, writes ~/.claude_google_token.json
+python3 tools/google-auth.py ~/Downloads/client_secret_xxx.json
+```
+
+Step 2, in Google Cloud Console:
+
+1. Create a project. Any name.
+2. **APIs & Services -> Library**: enable **Google Docs API** and **Google Drive API**.
+3. **OAuth consent screen**: choose External, fill in the required fields, and
+   add your own Google address under **Test users**. Without that last part
+   Google refuses the token.
+4. **Credentials -> Create credentials -> OAuth client ID**, application type
+   **Desktop app**. Download the JSON.
+
+The token is written to `~/.claude_google_token.json` with mode 600, outside the
+repository, and refreshes itself from then on. `make doctor` reports whether both
+halves are in place, because having the token but not the Python libraries is a
+common and confusing state.
+
+### What it can and cannot see
+
+The token requests `drive.file`, not full Drive access. That means this tool can
+only touch documents it created itself or that you explicitly opened with it. It
+cannot read the rest of your Drive, and that is deliberate.
+
+Revoke it at any time at [myaccount.google.com/permissions](https://myaccount.google.com/permissions),
+and delete `~/.claude_google_token.json`.
+
+Two paths exist, and they are for different things:Two paths exist, and they are for different things:
 
 | | `tools/gdoc.py` | `google-workspace` MCP |
 | --- | --- | --- |
-| Auth | `~/.claude_google_token.json` (working) | its own OAuth (still unauthorised) |
+| Auth | `~/.claude_google_token.json`, set up above | its own OAuth, separate |
 | Comments with anchors | yes, with character offsets | yes, via `get_doc_as_markdown` |
 | **Tracked changes (suggestions)** | **yes** | no |
 | **Resolve a comment as part of an edit** | **yes** | separate call |
 | Gmail, Calendar, Sheets, Slides | no | yes |
 
-Use `tools/gdoc.py` for the drafting and revision loop. The MCP server is worth
-authorising later for mail and calendar; its `GOOGLE_OAUTH_*` variables have been
-corrected in `~/.claude.json` so it will work when you do.
+Use `tools/gdoc.py` for the drafting and revision loop: it is the only one of the
+two that can read tracked changes and resolve a comment as part of the same edit.
+The `google-workspace` MCP server is worth authorising separately if you also
+want mail, calendar, Sheets or Slides.
 
 ## The tool
 

@@ -252,6 +252,27 @@ if (await exists(pluginDir)) {
   }
 }
 
+/* -------------------------------------------------------- 3c. integrations */
+
+rule("3c. Optional integrations");
+console.log(dim("  None of these are required. The legal research tools use only free,"));
+console.log(dim("  unauthenticated government registries and work without any of them.\n"));
+{
+  const found = await integrationChecks();
+  for (const i of found) {
+    if (i.ok) { ok(`${i.name.padEnd(26)} ${dim(i.version)}`); continue; }
+    warn(`${i.name.padEnd(26)} ${dim(i.version)}`);
+    if (i.fix) console.log(`        ${dim(i.fix)}`);
+  }
+  const google = found.find((i) => i.name.startsWith("Google"));
+  if (!google?.ok) {
+    console.log(`\n  ${dim("Google Docs lets you draft into a real document and work from the comments")}`);
+    console.log(`  ${dim("colleagues leave on it. Setup is three steps and one of them is a trip to")}`);
+    console.log(`  ${dim("the Google Cloud console, so it is not done here.")}`);
+    console.log(`  ${cyan("docs/google-docs-workflow.md")}${dim("  has the whole procedure.")}`);
+  }
+}
+
 /* ---------------------------------------------------------- 4. the maintenance log */
 
 const logPath = join(ROOT, "vault", "50-Handbook", "Maintenance log.md");

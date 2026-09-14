@@ -14,7 +14,7 @@ LEX   := mcp-servers/lex
 .DEFAULT_GOAL := help
 .PHONY: help setup install doctor status test test-aliases update update-check \
         index-uoou index-mzp index-justice index-status schedule unschedule \
-        clean-cache clean-indexes check-private
+        clean-cache clean-indexes check-private google-auth zotero
 
 ## help: show this list
 help:
@@ -83,6 +83,18 @@ schedule:
 ## unschedule: remove the weekly refresh
 unschedule:
 	@$(NODE) setup/schedule.mjs remove
+
+## google-auth: one-time Google Docs authorisation (optional)
+google-auth:
+	@python3 -m pip install -r tools/requirements.txt
+	@echo ""
+	@echo "  Now pass the OAuth client secret you downloaded from Google:"
+	@echo "    python3 tools/google-auth.py <client_secret.json>"
+	@echo "  The whole procedure is in docs/google-docs-workflow.md"
+
+## zotero: list your Zotero collections, to check the credentials work
+zotero:
+	@$(NODE) tools/zotero.mjs collections
 
 ## check-private: verify no personal file is about to be committed
 check-private:

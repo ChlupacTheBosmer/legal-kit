@@ -109,26 +109,40 @@ export async function depsCheck() {
 export async function integrationChecks() {
   const out = [];
 
+  // Two separate prerequisites, reported separately: people hit the missing
+  // Python libraries long after they thought Google was "set up".
   const googleToken = join(homedir(), ".claude_google_token.json");
+  const hasToken = await exists(googleToken);
+  let hasLibs = false;
+  try {
+    await run("python3", ["-c", "import google.oauth2.credentials, googleapiclient.discovery"], { timeout: 20_000 });
+    hasLibs = true;
+  } catch { /* not installed */ }
   out.push({
     name: "Google Docs / Drive",
-    ok: await exists(googleToken),
-    version: (await exists(googleToken)) ? "token present" : "not configured",
+    ok: hasToken && hasLibs,
+    version: hasToken && hasLibs ? "ready" : hasToken ? "token present, Python libraries missing" : "not configured",
     optional: true,
-    fix: "See docs/google-docs-workflow.md. Only needed to draft into Google Docs.",
+    fix: hasToken && !hasLibs
+      ? "python3 -m pip install -r tools/requirements.txt"
+      : "python3 -m pip install -r tools/requirements.txt && python3 tools/google-auth.py <client_secret.json>  (see docs/google-docs-workflow.md)",
   });
 
-  let zotero = false;
-  try {
-    const cfg = JSON.parse(await readFile(join(homedir(), ".claude.json"), "utf8"));
-    zotero = Boolean(cfg?.mcpServers?.zotero?.env?.ZOTERO_API_KEY);
-  } catch { /* no config, no Zotero */ }
+  let zotero = Boolean(process.env.ZOTERO_API_KEY);
+  let zoteroWhere = zotero ? "from the environment" : "";
+  if (!zotero) {
+    try {
+      const cfg = JSON.parse(await readFile(join(homedir(), ".claude.json"), "utf8"));
+      zotero = Boolean(cfg?.mcpServers?.zotero?.env?.ZOTERO_API_KEY);
+      if (zotero) zoteroWhere = "from ~/.claude.json";
+    } catch { /* no config, no Zotero */ }
+  }
   out.push({
     name: "Zotero",
     ok: zotero,
-    version: zotero ? "API key present" : "not configured",
+    version: zotero ? `API key present ${zoteroWhere}` : "not configured",
     optional: true,
-    fix: "Add a `zotero` MCP entry with ZOTERO_API_KEY and ZOTERO_LIBRARY_ID to ~/.claude.json.",
+    fix: "export ZOTERO_API_KEY / ZOTERO_LIBRARY_ID / ZOTERO_LIBRARY_TYPE, or add a `zotero` MCP entry to ~/.claude.json. Key from zotero.org/settings/keys.",
   });
 
   const pluginCfg = join(homedir(), ".claude", "plugins", "config", "claude-for-legal");

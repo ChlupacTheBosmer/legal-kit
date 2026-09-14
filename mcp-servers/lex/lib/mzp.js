@@ -121,6 +121,25 @@ async function crawlDelayMs() {
 
 const abs = (href) => (href.startsWith("http") ? href : `${SITE}${href.startsWith("/") ? "" : "/"}${href}`);
 
+/**
+ * Is this a document on the ministry's own site?
+ *
+ * Content pages link outward constantly: to eagri.cz, to UNECE, to the
+ * international river commissions, to other states' ministries. Following those
+ * would mean crawling servers whose robots.txt we never read and whose material
+ * is not ours to mirror, so attachment harvesting stops at the host boundary.
+ * The ministry also links to its own staging server (mzp-test.env.cz), which
+ * this excludes as a side effect: those links are broken for everyone.
+ */
+const ownHost = (url) => {
+  try {
+    const h = new URL(url).hostname.toLowerCase();
+    return h === "www.mzp.gov.cz" || h === "mzp.gov.cz";
+  } catch {
+    return false;
+  }
+};
+
 /** Page title, main text, and the file attachments linked from it. */
 function parsePage(html, url) {
   const title =
@@ -144,7 +163,8 @@ function parsePage(html, url) {
       .replace(/\s+/g, " ")
       .replace(/\((PDF|DOCX?|XLSX?|ODT|ODS|ZIP),?[^)]*\)/i, "")
       .trim();
-    files.push({ url: abs(m[1]), format: m[2].toLowerCase(), label: label || m[1].split("/").pop() });
+    const url = abs(m[1]);
+    files.push({ url, format: m[2].toLowerCase(), label: fileTitle(label, url) });
   }
   // A published date, where the page carries one.
   const date =
@@ -152,6 +172,30 @@ function parsePage(html, url) {
     (/(\d{1,2})\.\s?(\d{1,2})\.\s?(\d{4})/.exec(body.slice(0, 400)) || []).slice(1).reverse().join("-") ||
     null;
   return { title, body, files, published: normaliseDate(date) };
+}
+
+/**
+ * A title you could pick out of a result list.
+ *
+ * Link text on these pages is frequently "(Příloha)", "Věstník", "Prezentace"
+ * or "zde" - 366 of the first crawl's attachments carried one of those - which
+ * makes every one of them indistinguishable in search results. Where the label
+ * carries no information, build one from the filename instead, and keep the
+ * label as a prefix when it has any.
+ */
+const GENERIC_LABEL = /^\(?\s*(p[řr]íloha|p[řr]ílohy|v[ěe]stník|prezentace|dokument|soubor|zde|odkaz|ke sta[žz]en[íi]|\d+)\s*\)?$/i;
+
+function fileTitle(label, url) {
+  const stem = decodeURIComponent(url.split("/").pop() || "")
+    .replace(/\.[a-z0-9]+$/i, "")
+    .replace(/^(OK|OOV|ODOIMPZ|OZKO)[-_]/i, "")
+    .replace(/[-_]+/g, " ")
+    .replace(/\s*\b\d{8}\b\s*/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!label) return stem || url;
+  if (!GENERIC_LABEL.test(label.trim())) return label;
+  return stem ? `${label.replace(/[()]/g, "").trim()}: ${stem}` : label;
 }
 
 function normaliseDate(d) {
@@ -312,7 +356,10 @@ export async function build({
       mark.run(p.url, 200, new Date().toISOString());
       done.add(p.url);
       stored++;
-      for (const f of parsed.files) await storeFile(f, p.url, section, "dokument");
+      for (const f of parsed.files) {
+        if (!ownHost(f.url)) continue; // third-party server: not ours to mirror
+        await storeFile(f, p.url, section, "dokument");
+      }
       if (i % 20 === 0) onProgress(`pages ${i + 1}/${pages.length} · stored ${stored} · files ${files} · failed ${failed}`);
     } catch {
       mark.run(p.url, 0, new Date().toISOString());
@@ -328,7 +375,7 @@ export async function build({
       const r = await get(listUrl);
       if (r.status !== 200) { failed++; continue; }
       const { files: attached } = parsePage(r.body.toString("utf8"), listUrl);
-      const issues = attached.filter((f) => /vestnik/i.test(f.url));
+      const issues = attached.filter((f) => /vestnik/i.test(f.url) && ownHost(f.url));
       onProgress(`Věstník ${year}: ${issues.length} file(s)`);
       for (const f of issues) await storeFile(f, listUrl, `Věstník MŽP ${year}`, "vestnik");
     } catch {
@@ -405,7 +452,15 @@ export function stats() {
   try {
     const n = db.prepare("SELECT COUNT(*) n FROM docs").get().n;
     const byKind = db.prepare("SELECT kind, COUNT(*) n FROM docs GROUP BY kind ORDER BY n DESC").all();
-    const years = db.prepare("SELECT MIN(year) a, MAX(year) b FROM docs WHERE year IS NOT NULL").get();
+    // The `year` column comes from the upload path (/system/files/YYYY-MM/),
+    // which is when the file was posted, not which Věstník it is. An issue from
+    // 1998 re-uploaded in 2024 carries 2024 there. The facet year we actually
+    // requested is in `section`, so report the span from that.
+    const years = db.prepare(
+      `SELECT MIN(CAST(REPLACE(section,'Věstník MŽP ','') AS INTEGER)) a,
+              MAX(CAST(REPLACE(section,'Věstník MŽP ','') AS INTEGER)) b
+         FROM docs WHERE kind='vestnik' AND section LIKE 'Věstník MŽP %'`
+    ).get();
     const built = db.prepare("SELECT value FROM meta WHERE key='built_at'").get();
     const visited = db.prepare("SELECT COUNT(*) n FROM visited").get().n;
     const withText = db.prepare("SELECT COUNT(*) n FROM docs WHERE body IS NOT NULL AND LENGTH(body) > 200").get().n;

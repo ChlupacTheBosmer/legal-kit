@@ -1,0 +1,10 @@
+# Python dependencies for tools/gdoc.py (Google Docs and Drive drafting).
+#
+# Only needed if you use the Google Docs workflow. Everything else in this
+# repository is Node and needs none of this.
+#
+#   python3 -m pip install -r tools/requirements.txt
+#
+google-auth>=2.23
+google-auth-oauthlib>=1.1
+google-api-python-client>=2.100
