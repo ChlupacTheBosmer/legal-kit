@@ -241,10 +241,10 @@ if (await exists(pluginDir)) {
   console.log(dim("  Those plugins read their own profile and are drafted for US practice."));
   if (await confirm("Add the Czech/EU jurisdiction rules to their shared profile?", true)) {
     const target = join(pluginDir, "company-profile.md");
-    const banner = `\n\n<!-- added by lex-cz setup on ${todayISO()} -->\n## Jurisdiction: Czech Republic within the EU. Never United States law.\n\nThis workspace answers Czech and EU legal questions. Before delivering any output\nof these plugins that contains a legal statement, correct it against\n\`docs/jurisdiction-overlay.md\` in the lex-cz repository and say what was\ncorrected. Watch for: fair use, assignment of copyright, work made for hire,\nat-will employment, discovery, punitive damages. None of them exist in Czech law.\n\nEvery cited provision carries its text, its instrument named in full, a link and\na version date. Expand every abbreviation on first use. No em-dashes.\n`;
+    const banner = `\n\n<!-- added by legal-kit setup on ${todayISO()} -->\n## Jurisdiction: Czech Republic within the EU. Never United States law.\n\nThis workspace answers Czech and EU legal questions. Before delivering any output\nof these plugins that contains a legal statement, correct it against\n\`docs/jurisdiction-overlay.md\` in the legal-kit repository and say what was\ncorrected. Watch for: fair use, assignment of copyright, work made for hire,\nat-will employment, discovery, punitive damages. None of them exist in Czech law.\n\nEvery cited provision carries its text, its instrument named in full, a link and\na version date. Expand every abbreviation on first use. No em-dashes.\n`;
     try {
       const existing = (await exists(target)) ? await readFile(target, "utf8") : "# Company profile\n";
-      if (existing.includes("lex-cz setup")) ok("already mirrored");
+      if (existing.includes("legal-kit setup")) ok("already mirrored");
       else { await writeFile(target, existing + banner); ok(`appended the jurisdiction rules to ${dim(target)}`); }
     } catch (e) {
       warn(`could not write ${target}: ${e.message}`);

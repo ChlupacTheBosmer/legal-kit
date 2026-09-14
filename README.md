@@ -84,8 +84,8 @@ prevent.
 | `git` | optional | Only to pull updates |
 
 ```bash
-git clone https://github.com/YOUR-NAME/lex-cz.git
-cd lex-cz
+git clone https://github.com/ChlupacTheBosmer/legal-kit.git
+cd legal-kit
 make setup
 ```
 

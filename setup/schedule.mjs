@@ -24,11 +24,29 @@ import { bold, dim, green, yellow, cyan, ok, warn, bad, rule } from "./lib/ui.mj
 const run = promisify(execFile);
 const cmd = process.argv[2] || "status";
 
-const LABEL = "cz.lex.update";
+const LABEL = "cz.legalkit.update";
 const PLIST = join(homedir(), "Library", "LaunchAgents", `${LABEL}.plist`);
-const MARK_START = "# >>> lex-cz weekly index refresh >>>";
-const MARK_END = "# <<< lex-cz weekly index refresh <<<";
+const MARK_START = "# >>> legal-kit weekly index refresh >>>";
+const MARK_END = "# <<< legal-kit weekly index refresh <<<";
 const LOG = join(ROOT, ".data", "update.log");
+
+/**
+ * Identifiers used before this repository was renamed to legal-kit. An agent or
+ * crontab entry installed under the old name is invisible to the new `remove`,
+ * so it would keep firing weekly with nobody able to find it. Both paths clean
+ * these up as well.
+ */
+const LEGACY_LABEL = "cz.lex.update";
+const LEGACY_PLIST = join(homedir(), "Library", "LaunchAgents", `${LEGACY_LABEL}.plist`);
+const LEGACY_MARK_START = "# >>> lex-cz weekly index refresh >>>";
+const LEGACY_MARK_END = "# <<< lex-cz weekly index refresh <<<";
+
+async function removeLegacyMac() {
+  if (!(await exists(LEGACY_PLIST))) return;
+  try { await run("launchctl", ["unload", LEGACY_PLIST]); } catch { /* not loaded */ }
+  await unlink(LEGACY_PLIST);
+  warn(`also removed an agent left by the previous name (${LEGACY_LABEL})`);
+}
 
 /* --------------------------------------------------------------- macOS */
 
@@ -57,6 +75,7 @@ const plistBody = () => `<?xml version="1.0" encoding="UTF-8"?>
 `;
 
 async function macInstall() {
+  await removeLegacyMac();
   await mkdir(join(homedir(), "Library", "LaunchAgents"), { recursive: true });
   await mkdir(join(ROOT, ".data"), { recursive: true });
   await writeFile(PLIST, plistBody());
@@ -68,6 +87,7 @@ async function macInstall() {
 }
 
 async function macRemove() {
+  await removeLegacyMac();
   if (!(await exists(PLIST))) return warn("no launchd agent installed");
   try { await run("launchctl", ["unload", PLIST]); } catch { /* already unloaded */ }
   await unlink(PLIST);
@@ -92,10 +112,12 @@ async function writeCrontab(text) {
 }
 
 function stripBlock(text) {
-  const a = text.indexOf(MARK_START);
-  const b = text.indexOf(MARK_END);
-  if (a === -1 || b === -1) return text;
-  return (text.slice(0, a) + text.slice(b + MARK_END.length)).replace(/\n{3,}/g, "\n\n");
+  for (const [start, end] of [[MARK_START, MARK_END], [LEGACY_MARK_START, LEGACY_MARK_END]]) {
+    const a = text.indexOf(start);
+    const b = text.indexOf(end);
+    if (a !== -1 && b !== -1) text = text.slice(0, a) + text.slice(b + end.length);
+  }
+  return text.replace(/\n{3,}/g, "\n\n");
 }
 
 async function linuxInstall() {

@@ -32,7 +32,7 @@ function report(c) {
   if (c.fix) console.log(`        ${cyan(c.fix)}`);
 }
 
-console.log(bold("\nlex-cz doctor"));
+console.log(bold("\nlegal-kit doctor"));
 
 rule("Runtime");
 for (const c of [nodeCheck(), await sqliteCheck(), await npmCheck(), await depsCheck()]) report(c);
