@@ -42,4 +42,24 @@ if [ ! -d "$SERVER/node_modules/@modelcontextprotocol/sdk" ]; then
   echo "legal-kit: dependencies installed." >&2
 fi
 
+# Is this a configured legal project?
+#
+# Decided here rather than in the server because the shell knows the session's
+# working directory. Walk up a few levels so a session started in a subfolder of
+# a matter still counts; stop at the home directory, since a marker there would
+# switch every session on.
+if [ "${LEGAL_KIT_SCOPE:-}" = "always" ]; then
+  LEGAL_KIT_ACTIVE=1
+else
+  LEGAL_KIT_ACTIVE=0
+  dir="$PWD"
+  for _ in 1 2 3 4 5; do
+    [ "$dir" = "$HOME" ] && break
+    [ "$dir" = "/" ] && break
+    if [ -f "$dir/.legal-kit/project.md" ]; then LEGAL_KIT_ACTIVE=1; break; fi
+    dir="$(dirname "$dir")"
+  done
+fi
+export LEGAL_KIT_ACTIVE
+
 exec node "$SERVER/server.js"

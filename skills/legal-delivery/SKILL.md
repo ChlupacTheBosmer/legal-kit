@@ -1,12 +1,6 @@
 ---
 name: legal-delivery
-description: >
-  Deliver legal work out of the workspace and bring the response back: a memo,
-  opinion, contract or submission into a Google Doc for review, reviewer comments
-  worked through one span at a time, and commentary filed to Zotero. Use when
-  work has to reach a human reviewer, a client or a colleague, when a delivered
-  document comes back with comments, or when a source needs adding to a reference
-  library. Delegates to gdocs-kit and zotero-kit when installed.
+description: Deliver legal work to a Google Doc and revise it from reviewer comments, and file commentary to Zotero. Delegates to gdocs-kit and zotero-kit when installed. Use when a memo, opinion, contract or submission must reach a reviewer or client, when a delivered document comes back commented, or when a source needs adding to a reference library.
 ---
 
 # Delivering legal work, and getting it back

@@ -1,11 +1,6 @@
 ---
 name: doctor
-description: >
-  Check that legal-kit is working: Node and dependencies, your profile, the
-  optional integrations, whether the nine official registries are reachable, and
-  whether the local indexes have gone stale. Each failure carries its own fix.
-  Use when something behaves oddly, after connecting an integration, or when the
-  user says "is legal-kit working", "check my setup", or "doctor".
+description: Check legal-kit: runtime, profile, integrations, companion plugins, whether the registries answer, and index staleness. Each failure carries its fix. Use when something behaves oddly, after connecting an integration, or on "is legal-kit working", "doctor".
 argument-hint: "[--quick to skip the network check]"
 ---
 
@@ -43,3 +38,15 @@ and it deserves a stronger nudge than a missing one.
 ## After a failure the user fixes
 
 Re-run it. Do not assume a fix worked because the command exited zero.
+
+## If the tools are missing entirely
+
+legal-kit registers its full tool set only in a project that has been through
+`/legal-kit:setup-project`, because twenty-nine tool definitions cost about
+eight thousand tokens of context in every session that loads them and most
+sessions are not legal work. Outside such a project only `legal_cite` is
+registered.
+
+So "the tools are gone" usually means the working directory has no
+`.legal-kit/project.md` above it. Either run `/legal-kit:setup-project` here, or
+set `LEGAL_KIT_SCOPE=always` and restart to load them everywhere.

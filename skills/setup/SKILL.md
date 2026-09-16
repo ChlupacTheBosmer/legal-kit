@@ -1,11 +1,6 @@
 ---
 name: setup
-description: >
-  Run the legal-kit cold-start interview: learns who you are, what you practise,
-  where you practise it and under what supervision, then writes your profile and
-  builds the local indexes. Use on first install, when the profile is missing or
-  still has placeholders, or when the user says "set up legal-kit", "onboard me",
-  "configure legal-kit", or wants to re-run the interview or re-check integrations.
+description: Cold-start interview for legal-kit: your standing, practice areas, supervision, integrations, and the local indexes. Use on first install, when the profile is missing or has placeholders, or on "set up legal-kit", "onboard me", "configure legal-kit".
 argument-hint: "[--redo] [--redo <section>] [--full] [--check-integrations] [--areas]"
 ---
 

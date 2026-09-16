@@ -36,6 +36,35 @@ import { EU_ALIASES, CZ_ALIASES, resolveEuAlias, resolveCzAlias } from "./lib/al
 
 const server = new McpServer({ name: "lex", version: "0.1.0" });
 
+/**
+ * Register the full tool set only where legal work actually happens.
+ *
+ * Twenty-nine tool definitions cost roughly eight thousand tokens of context in
+ * every session that loads them. This plugin installs globally, so without a
+ * gate that is a tax on every unrelated session on the machine: writing Python,
+ * answering email, anything. The legal tools are worth their weight in a matter
+ * and worth nothing at all outside one.
+ *
+ * Dormant is not off. `legal_cite` stays registered everywhere, because "what
+ * does § 30 actually say" is worth answering from any directory and it is the
+ * one tool that answers it. That costs about three hundred tokens instead of
+ * eight thousand.
+ *
+ * Set LEGAL_KIT_SCOPE=always to register everything everywhere.
+ */
+const ACTIVE = (() => {
+  if (process.env.LEGAL_KIT_SCOPE === "always") return true;
+  if (process.env.LEGAL_KIT_SCOPE === "project") return false;
+  // launch.sh resolves this against the session's working directory.
+  return process.env.LEGAL_KIT_ACTIVE === "1";
+})();
+
+/** Registers a tool only when the full set is active. */
+const registerTool = (name, def, handler) => {
+  if (!ACTIVE && name !== "legal_cite") return;
+  server.registerTool(name, def, handler);
+};
+
 const text = (s) => ({ content: [{ type: "text", text: s }] });
 const fail = (s) => ({ content: [{ type: "text", text: s }], isError: true });
 
@@ -74,7 +103,7 @@ function czHeader(ref, version, repealed = false) {
   ].filter((l) => l !== null).join("\n");
 }
 
-server.registerTool(
+registerTool(
   "cz_act_versions",
   {
     title: "Czech act — version history",
@@ -104,7 +133,7 @@ server.registerTool(
     })
 );
 
-server.registerTool(
+registerTool(
   "cz_act_text",
   {
     title: "Czech act — official text",
@@ -148,7 +177,7 @@ server.registerTool(
     })
 );
 
-server.registerTool(
+registerTool(
   "cz_act_toc",
   {
     title: "Czech act — table of contents",
@@ -166,7 +195,7 @@ server.registerTool(
     })
 );
 
-server.registerTool(
+registerTool(
   "cz_act_info",
   {
     title: "Czech act — identity and metadata",
@@ -206,7 +235,7 @@ server.registerTool(
     })
 );
 
-server.registerTool(
+registerTool(
   "cz_act_relations",
   {
     title: "Czech act — relations to other acts and to EU law",
@@ -262,7 +291,7 @@ server.registerTool(
 
 /* --------------------------------------------------------------------- EU */
 
-server.registerTool(
+registerTool(
   "eu_act_search",
   {
     title: "EU law — search titles",
@@ -302,7 +331,7 @@ server.registerTool(
     })
 );
 
-server.registerTool(
+registerTool(
   "eu_celex_lookup",
   {
     title: "EU law — resolve a short name to CELEX",
@@ -351,7 +380,7 @@ server.registerTool(
     })
 );
 
-server.registerTool(
+registerTool(
   "eu_act_metadata",
   {
     title: "EU law — metadata for a CELEX",
@@ -386,7 +415,7 @@ server.registerTool(
     })
 );
 
-server.registerTool(
+registerTool(
   "eu_act_versions",
   {
     title: "EU law — consolidated versions",
@@ -412,7 +441,7 @@ server.registerTool(
     })
 );
 
-server.registerTool(
+registerTool(
   "eu_act_text",
   {
     title: "EU law — official text",
@@ -460,7 +489,7 @@ server.registerTool(
 
 /* ------------------------------------------- Czech companies (ARES) */
 
-server.registerTool(
+registerTool(
   "cz_company_search",
   {
     title: "Czech company — search",
@@ -491,7 +520,7 @@ server.registerTool(
     })
 );
 
-server.registerTool(
+registerTool(
   "cz_company",
   {
     title: "Czech company — full record",
@@ -556,7 +585,7 @@ server.registerTool(
 
 /* ------------------------------------------------- Czech case law */
 
-server.registerTool(
+registerTool(
   "cz_case_search",
   {
     title: "Czech case law — search the Supreme Court",
@@ -607,7 +636,7 @@ server.registerTool(
     })
 );
 
-server.registerTool(
+registerTool(
   "cz_case_text",
   {
     title: "Czech case law — full text of a decision",
@@ -674,7 +703,7 @@ server.registerTool(
     })
 );
 
-server.registerTool(
+registerTool(
   "cz_case_lower_scan",
   {
     title: "Czech case law — scan district and regional court decisions",
@@ -715,7 +744,7 @@ server.registerTool(
 
 
 
-server.registerTool(
+registerTool(
   "legal_cite",
   {
     title: "Verified citation for a legal reference",
@@ -763,7 +792,7 @@ server.registerTool(
 
 /* --------------------------------------- ÚOOÚ guidance (Czech DPA) */
 
-server.registerTool(
+registerTool(
   "cz_guidance_search",
   {
     title: "ÚOOÚ guidance — search",
@@ -809,7 +838,7 @@ server.registerTool(
     })
 );
 
-server.registerTool(
+registerTool(
   "cz_guidance_text",
   {
     title: "ÚOOÚ guidance — full text",
@@ -845,7 +874,7 @@ server.registerTool(
 
 /* ------------------------------ Constitutional Court (NALUS) search */
 
-server.registerTool(
+registerTool(
   "cz_us_search",
   {
     title: "Constitutional Court — search",
@@ -895,7 +924,7 @@ server.registerTool(
     })
 );
 
-server.registerTool(
+registerTool(
   "cz_us_keywords",
   {
     title: "Constitutional Court — subject index vocabulary",
@@ -919,7 +948,7 @@ server.registerTool(
     })
 );
 
-server.registerTool(
+registerTool(
   "cz_case_lower_search",
   {
     title: "District and regional courts — subject search",
@@ -974,7 +1003,7 @@ server.registerTool(
 
 /* -------------------------------- Court of Justice of the European Union */
 
-server.registerTool(
+registerTool(
   "eu_case_search",
   {
     title: "CJEU case law — search",
@@ -1014,7 +1043,7 @@ server.registerTool(
     })
 );
 
-server.registerTool(
+registerTool(
   "eu_case_documents",
   {
     title: "CJEU case — what documents exist",
@@ -1045,7 +1074,7 @@ server.registerTool(
 /* ------------------ Supreme Administrative Court and regional administrative
  *                    courts (vyhledavac.nssoud.cz)                          */
 
-server.registerTool(
+registerTool(
   "cz_nss_areas",
   {
     title: "NSS — the court's own subject index",
@@ -1084,7 +1113,7 @@ server.registerTool(
     })
 );
 
-server.registerTool(
+registerTool(
   "cz_nss_search",
   {
     title: "Supreme Administrative Court and regional administrative courts — search",
@@ -1156,7 +1185,7 @@ server.registerTool(
     })
 );
 
-server.registerTool(
+registerTool(
   "cz_nss_case",
   {
     title: "NSS decision — the full record",
@@ -1213,7 +1242,7 @@ server.registerTool(
     })
 );
 
-server.registerTool(
+registerTool(
   "cz_nss_text",
   {
     title: "NSS decision — full text",
@@ -1239,7 +1268,7 @@ server.registerTool(
 
 /* ------------------------ MŽP guidance (Ministry of the Environment) */
 
-server.registerTool(
+registerTool(
   "cz_mzp_search",
   {
     title: "MŽP guidance and Věstník — search",
@@ -1295,7 +1324,7 @@ server.registerTool(
     })
 );
 
-server.registerTool(
+registerTool(
   "cz_mzp_text",
   {
     title: "MŽP guidance — full document",

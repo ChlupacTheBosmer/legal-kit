@@ -108,6 +108,32 @@ preparation and risk assessment.
 
 ---
 
+## Context cost, and when the tools load
+
+A plugin installed globally is loaded in every session, including the ones that
+have nothing to do with law. Twenty-nine tool definitions cost roughly eight
+thousand tokens, which is a real tax on a machine where most work is something
+else.
+
+So legal-kit is **dormant until it is in a legal project**:
+
+| Where | Tools registered | Context |
+| --- | --- | --- |
+| A project with `.legal-kit/project.md` | all 29 | ~8,000 tokens |
+| Anywhere else | `legal_cite` only | ~330 tokens |
+
+Dormant is not off. `legal_cite` stays available everywhere, because "what does
+§ 30 actually say" is worth answering from any directory and it is the one tool
+that answers it. The check walks up from the working directory, so a session
+started in a subfolder of a matter still counts.
+
+To load everything everywhere, set `LEGAL_KIT_SCOPE=always` in your environment.
+To keep it dormant even inside a project, set `LEGAL_KIT_SCOPE=project`.
+
+The sourcing rules are injected by the `SessionStart` hook on the same
+condition, so an unrelated project gets neither the tools nor a page of Czech
+citation rules.
+
 ## Where things live
 
 Nothing writable goes inside the plugin: installs are versioned, so an upgrade is

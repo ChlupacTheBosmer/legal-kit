@@ -1,0 +1,69 @@
+name: check
+
+# Deliberately does NOT run the full selftest: it calls nine live government
+# registries, and firing those on every push would be a poor way to treat free
+# public infrastructure. A red build would usually mean a ministry was having a
+# slow morning rather than that anything here is broken.
+#
+# What CI checks is the deterministic part: does it parse, does it install, does
+# the server come up, and is it still dormant outside a legal project.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install the server's dependencies
+        run: npm install --no-audit --no-fund
+        working-directory: mcp/lex
+
+      - name: Every script parses
+        shell: bash
+        run: |
+          shopt -s globstar nullglob
+          for f in scripts/*.mjs tools/*.mjs .github/scripts/*.mjs mcp/lex/*.js mcp/lex/lib/*.js; do
+            node --check "$f"
+          done
+          for f in scripts/*.sh hooks/*.sh; do sh -n "$f"; done
+          python3 -c "import ast,sys; [ast.parse(open(f).read()) for f in sys.argv[1:]]" tools/*.py
+          echo "all scripts parse"
+
+      - name: Manifests are valid JSON
+        run: |
+          python3 -c "
+          import json
+          for f in ['.claude-plugin/plugin.json', '.claude-plugin/marketplace.json', '.mcp.json', 'hooks/hooks.json']:
+              json.load(open(f))
+              print('ok', f)
+          "
+
+      - name: Every skill has usable frontmatter
+        run: |
+          python3 -c "
+          import pathlib, re, sys
+          bad = 0
+          for f in sorted(pathlib.Path('skills').glob('*/SKILL.md')):
+              m = re.match(r'---\n(.*?)\n---\n', f.read_text(encoding='utf-8'), re.S)
+              if not m: print('no frontmatter:', f); bad += 1; continue
+              fm = m.group(1)
+              if not re.search(r'^name:', fm, re.M) or not re.search(r'^description:\s*\S', fm, re.M):
+                  print('missing name or description:', f); bad += 1
+          print('skills checked')
+          sys.exit(1 if bad else 0)
+          "
+
+      - name: The server starts and registers its tools
+        run: node .github/scripts/tools-list.mjs
+
+      - name: Still dormant outside a legal project
+        run: node .github/scripts/dormancy.mjs

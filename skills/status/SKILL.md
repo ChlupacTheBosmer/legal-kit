@@ -1,10 +1,6 @@
 ---
 name: status
-description: >
-  Quick local check of the legal-kit workspace: profile, index sizes and ages,
-  any background build in progress, and whether the weekly refresh is installed.
-  No network calls, so it is safe to run while a long index build is working.
-  Use when the user asks what state things are in, or how a build is going.
+description: Local legal-kit status: profile, index sizes and ages, any background build, the refresh schedule. No network, safe during a long build. Use on "how is the build going", "legal-kit status".
 ---
 
 # /legal-kit:status

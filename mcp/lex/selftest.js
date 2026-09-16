@@ -14,7 +14,13 @@ import { EU_ALIASES, CZ_ALIASES } from "./lib/aliases.js";
 const HERE = dirname(fileURLToPath(import.meta.url));
 
 function client() {
-  const proc = spawn(process.execPath, [join(HERE, "server.js")], { stdio: ["pipe", "pipe", "pipe"] });
+  // The server registers its full tool set only inside a configured legal
+  // project, to keep twenty-nine tool definitions out of every unrelated
+  // session. The test is not in one, so ask for everything explicitly.
+  const proc = spawn(process.execPath, [join(HERE, "server.js")], {
+    stdio: ["pipe", "pipe", "pipe"],
+    env: { ...process.env, LEGAL_KIT_SCOPE: "always" },
+  });
   let buf = "";
   const pending = new Map();
   proc.stdout.on("data", (d) => {

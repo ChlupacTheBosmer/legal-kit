@@ -1,10 +1,6 @@
 ---
 name: update
-description: >
-  Refresh the local indexes that have gone stale, or build the ones missing.
-  Use when the user says "update legal-kit", "refresh the indexes", "rebuild the
-  index", when doctor reports staleness, or when a search returns something that
-  looks out of date.
+description: Refresh the legal-kit indexes that have gone stale, or build missing ones (ÚOOÚ, MŽP, lower courts). Use on "update legal-kit", "refresh the indexes", "rebuild the index", or when doctor reports staleness.
 argument-hint: "[--force] [--check] [uoou|mzp|justice]"
 ---
 

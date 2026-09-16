@@ -1,12 +1,6 @@
 ---
 name: setup-project
-description: >
-  Configure legal-kit for the project you are standing in: what this workspace is
-  for, whose matter it is, which areas are live here, what gets produced and in
-  what language, and how confidential it is. Writes the project CLAUDE.md and
-  scaffolds the knowledge base. Use when starting a new matter or research
-  project, when the user says "set up this project", "configure this matter", or
-  when legal-kit skills run in a project with no project configuration.
+description: Configure legal-kit for this project: what it is for, whose matter, which areas are live, what it produces, how confidential. Writes the project CLAUDE.md. Use on a new matter or research project, or on "set up this project", "configure this matter".
 argument-hint: "[--redo] [--minimal] [--vault] [--no-vault]"
 ---
 
