@@ -1,0 +1,15 @@
+{
+  "name": "legal-kit",
+  "owner": { "name": "Petr Chlup", "email": "chlupp@natur.cuni.cz" },
+  "metadata": {
+    "description": "Czech and EU legal research for Claude Code, read from the official registries.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "legal-kit",
+      "source": "./",
+      "description": "Czech and EU legal research: 29 tools over nine official registries (e-Sbirka, EUR-Lex, NSS, NS, US, CJEU, justice.cz, UOOU, MZP, ARES), Czech-language legal workflows, and setup interviews that configure it for your practice."
+    }
+  ]
+}

@@ -1,8 +1,0 @@
-{
-  "name": "pravo-skills-cz",
-  "version": "1.1.0-lex.1",
-  "description": "Ceske pravni skilly (revize smluv, triage NDA, compliance, KYC dodavatele, priprava jednani, posouzeni rizika, sablonove odpovedi) napojene na MCP server lex — e-Sbirka, EUR-Lex, judikatura NS/US, ARES. Upraveno z pravo-skills od DirectCase (MIT).",
-  "author": {
-    "name": "DirectCase"
-  }
-}

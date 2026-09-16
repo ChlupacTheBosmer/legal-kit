@@ -71,112 +71,94 @@ prevent.
 
 ---
 
-## Getting started
-
-**Requirements**
-
-| | | |
-| --- | --- | --- |
-| **Node 22 or newer** | required | The local indexes use the built-in `node:sqlite` |
-| **Claude Code** | required | [claude.com/claude-code](https://claude.com/claude-code) |
-| `pdftotext` (poppler) | optional | Indexes ministry PDFs by their text rather than their title |
-| `python3` | optional | Only for the Google Docs helper |
-| `git` | optional | Only to pull updates |
-
-```bash
-git clone https://github.com/ChlupacTheBosmer/legal-kit.git
-cd legal-kit
-make setup
-```
-
-`make setup` does five things, each skippable, and is safe to re-run:
-
-1. **Checks the machine.** If something is missing it names it, says what it is
-   for, and gives the command that installs it.
-2. **Installs** the MCP server's two npm dependencies.
-3. **Asks who you are** and writes `PROFILE.md`.
-4. **Builds the local indexes**, with an honest time estimate for each.
-5. **Offers a weekly refresh** via launchd or cron.
-
-Then:
-
-```bash
-claude          # the legal tools are registered automatically
-```
-
-A good first question is one you already know the answer to.
-
-### The commands
+## Install
 
 ```
-make setup       first run: check, install, configure, build
-make doctor      is everything working, reachable and current?
-make status      quick local status, safe during a long background build
-make test        end-to-end test of every tool against the live registries
-make update      refresh whatever has gone stale
-make schedule    install a weekly refresh
-make help        all of them
+/plugin marketplace add ChlupacTheBosmer/legal-kit
+/plugin install legal-kit@legal-kit
 ```
 
-`make doctor` is the one to run when something feels wrong. It reports what is
-installed, what is reachable, what is configured and what is stale, and attaches
-the fix to each failure rather than leaving it implied.
+Restart Claude Code. The server installs its two dependencies on first start, so
+the first session takes a few seconds longer than the rest.
 
----
-
-## What is in the repository
+Then, once per machine:
 
 ```
-CLAUDE.md              The rules. Read this first.
-PROFILE.md             You. Written by `make setup`, never committed.
-PROFILE.example.md     What PROFILE.md looks like, as documentation.
-Makefile               Every command.
-NOTICE.md              Third-party licences, and what may be redistributed.
+/legal-kit:setup
+```
 
-mcp-servers/lex/       The MCP server: 29 tools over nine registries.
-  server.js            Tool definitions and how each result is presented.
-  lib/                 One module per source. esbirka, eurlex, nss, mzp,
-                       caselaw, nalus, justice, cjeu, uoou, ares, cite,
-                       aliases, czsearch (Czech stemming and the
-                       English-query guard), http (cache), format.
-  selftest.js          Live end-to-end test of all of it.
+Three minutes for the quick path, twenty for the full one. It asks who you are,
+what standing you hold, what you actually practise and what you only touch, then
+runs a question block for each of your areas and builds the indexes you want.
 
-tools/
-  uoou-index.mjs       Build the data protection authority's guidance index
-  mzp-index.mjs        Build the environment ministry's guidance index
-  justice-index.mjs    Build the lower-court index
-  gdoc.py              Google Docs: read, comment, edit, create  (optional)
-  google-auth.py       One-time Google authorisation              (optional)
-  zotero.mjs           Zotero: search, add, upload                (optional)
-  requirements.txt     Python dependencies, for the Google helper only
+Then, inside each matter or research project:
 
-setup/
-  setup.mjs            The wizard
-  doctor.mjs           Health, reachability, staleness
-  status.mjs           Cheap local status
-  update.mjs           Refresh what has gone stale
-  schedule.mjs         launchd / cron install and removal
-  check-private.mjs    What git would publish, before it does
+```
+/legal-kit:setup-project
+```
 
-vault/                 The knowledge base (an Obsidian vault, but plain markdown)
-  50-Handbook/         How the project works. Start here.
-  90-Templates/        Note templates: topic, instrument, memo, playbook
-  40-Playbooks/        One worked example ships with the template
-  10-Topics/ 20-Instruments/ 30-Memos/ 00-Inbox/   yours, gitignored
+Five minutes. What this workspace is for, whose it is, which of your areas are
+live here, what it produces, how confidential it is.
 
-docs/
-  tooling.md               What each tool does, and its limits
-  source-apis.md           How each registry actually works, including the traps
-  jurisdiction-overlay.md  US-to-Czech corrections for the plugins
-  google-docs-workflow.md  The Google Docs loop, and how to authorise it
-  directcase-gap-analysis.md   Analysis of the Czech workflow plugin
+**Requirements:** Node 22 or newer, because the local indexes use the built-in
+`node:sqlite`. Optionally `pdftotext` to index ministry PDFs by their text rather
+than their title, and `python3` for the Google Docs helper.
 
-.claude/skills/
-  cz-legal-research/   The Czech search procedure. The most valuable single file.
-  task-observer/       Notices patterns worth turning into skills (CC BY 4.0)
+### Commands
 
-plugins/pravo-skills-cz/     Nine Czech-language workflows (MIT, DirectCase)
-privacy/ contracts/ ai-governance/    Scaffolding for work product, gitignored
+| | |
+| --- | --- |
+| `/legal-kit:setup` | Global cold start: who you are, your areas, your indexes |
+| `/legal-kit:setup-project` | Per project: what this workspace is for |
+| `/legal-kit:doctor` | Runtime, configuration, whether the registries answer, index staleness |
+| `/legal-kit:status` | Cheap local check, safe while a long build runs |
+| `/legal-kit:update` | Refresh whatever has gone stale |
+
+Plus the research skill `cz-legal-research`, which is the Czech search procedure,
+and nine Czech-language workflow skills for contract review, NDA triage,
+compliance checks, counterparty KYC, negotiation preparation and risk assessment.
+
+## Where things live
+
+Nothing writable goes inside the plugin, because plugin installs are versioned
+and an upgrade is a new directory.
+
+| | |
+| --- | --- |
+| The plugin | `~/.claude/plugins/cache/legal-kit/legal-kit/<version>/` |
+| Your profile | `~/.claude/plugins/config/legal-kit/profile.md` |
+| Indexes and cache | `~/.legal-kit/` |
+| Project configuration | `.legal-kit/project.md` and `CLAUDE.md` in the project |
+| Your notes and work product | in the project, and gitignored by setup |
+
+The indexes are global on purpose. ÚOOÚ guidance, the Věstník and the
+lower-court index are jurisdiction-wide facts, not project facts: build the
+4,400-document ministry mirror once and every matter you ever open uses it.
+
+## What is in the plugin
+
+```
+.claude-plugin/     marketplace.json and plugin.json
+.mcp.json           registers the lex server
+scripts/launch.sh   starts it, installing dependencies on first run
+hooks/              loads the sourcing rules in a configured legal project
+rules/core.md       those rules: sourcing discipline, citation format, answer format
+
+mcp/lex/            the MCP server: 29 tools over nine registries
+  lib/              one module per source
+  selftest.js       live end-to-end test of all of it
+
+skills/
+  setup/            the global cold-start interview
+    areas/          a question block per practice area
+  setup-project/    the per-project interview
+  cz-legal-research/    the Czech search procedure
+  cz-*/             nine Czech-language workflow skills
+  doctor/ status/ update/
+
+tools/              index builders, Google Docs and Zotero helpers
+templates/          vault scaffolding that setup-project copies into a project
+docs/               how each registry actually works, and the US-to-Czech overlay
 ```
 
 ### The vault
@@ -250,8 +232,8 @@ so that an interrupted run still leaves you the guidance pages rather than
 nothing. Start it and walk away:
 
 ```bash
-make index-mzp     # or let `make setup` start it in the background
-make status        # check on it, safely, while it runs
+/legal-kit:update     # or let /legal-kit:setup start it in the background
+/legal-kit:status     # check on it, safely, while it runs
 ```
 
 A full MŽP build produces roughly 4,400 documents, of which about 300 are Věstník
@@ -264,17 +246,16 @@ stale and needs no index at all. Only the court's subject vocabulary is cached,
 for thirty days.
 
 A stale mirror of a regulator is worse than none, because it looks current. That
-is what `make schedule` is for.
+is what the weekly refresh `/legal-kit:setup` offers is for.
 
 ---
 
 ## Making it yours
 
-**`PROFILE.md`** is where you live. `make setup` writes it from your answers: your
+**Your profile** is where you live. `/legal-kit:setup` writes it from your answers: your
 name, your role, whether you are legally qualified, whether you are on the roll of
 advocates, what you practise, what you work in but do not specialise in, your
-language, your integrations. It is **not tracked by git**, so it stays on your
-machine and `git pull` never touches it.
+language, your integrations. It lives outside the plugin, so upgrading never touches it.
 
 That file changes how the assistant writes:
 
@@ -285,15 +266,15 @@ That file changes how the assistant writes:
 | Not legally qualified | Keep every citation, and explain the doctrinal step as well as the conclusion |
 | Environmental is outside my specialism | Set out the doctrinal background rather than assume it |
 
-Edit it by hand any time, or re-run `make setup` to rewrite it.
+Edit it by hand any time, or re-run `/legal-kit:setup` to rewrite it.
 
-**`CLAUDE.md`** holds the rules that apply to everyone. Edit it if you disagree,
-but read it first: most of it was written in response to a specific way of getting
-things wrong.
+**`rules/core.md`** holds the rules that apply to everyone, and the hook loads them
+in any configured legal project. Read them before disagreeing: most of it was
+written in response to a specific way of getting things wrong.
 
 **Adding a practice area?** Two things are worth doing. Add your tags to the
 controlled list in `vault/README.md`, and extend `EN_MARKERS` in
-`mcp-servers/lex/lib/czsearch.js` with the English vocabulary of that area. That
+the plugin's `mcp/lex/lib/czsearch.js` with the English vocabulary of that area. That
 second one matters: the guard that stops an English query reaching a Czech corpus
 works from a word list, so it is only as good as the subjects that list covers.
 
@@ -316,7 +297,7 @@ export ZOTERO_API_KEY=...        # zotero.org/settings/keys
 export ZOTERO_LIBRARY_ID=...     # your numeric user id, or a group id
 export ZOTERO_LIBRARY_TYPE=user  # or 'group'
 
-make zotero                      # lists your collections, to check it works
+node tools/zotero.mjs collections   # lists your collections, to check it works
 ```
 
 It also reads a `zotero` MCP entry in `~/.claude.json` if you have one, so the
@@ -363,7 +344,7 @@ several places. Citations written into a document go through `legal_cite` first
 and are inserted as live links to e-Sbírka or EUR-Lex, so a reader can check
 them.
 
-`make doctor` reports both integrations, and reports the Google libraries and the
+`/legal-kit:doctor` reports both integrations, and reports the Google libraries and the
 Google token separately: having the token but not the Python packages is a
 common and confusing state.
 
@@ -382,50 +363,32 @@ in Czech law. The overlay says what to use instead.
 
 ## Keeping your work private
 
-This repository is meant to be forked and shared, and its whole point is that you
-keep real legal work in it. Those pull against each other, so the separation is
-explicit rather than left to everyone's care with `.gitignore`.
+The plugin ships no personal content and writes none into itself. Your profile
+lives in `~/.claude/plugins/config/legal-kit/`, indexes in `~/.legal-kit/`, and
+your notes and work product stay in whatever project you made them in.
 
-**Never tracked:** `PROFILE.md`, your maintenance log, everything you write in
-`vault/10-Topics`, `20-Instruments`, `30-Memos`, `00-Inbox` and your own
-playbooks, all of `privacy/`, `contracts/` and `ai-governance/` below their
-READMEs, `sources/` (for third-party material you may not redistribute), the
-built indexes, and the HTTP cache.
-
-```bash
-make check-private
-```
-
-It reads what git would **actually** publish rather than what is on disk, and
-flags personal profiles, work product, your own notes, email addresses, company
-names and identifiers, and anything shaped like a credential. Run it before your
-first push and you will not have to think about it again.
-
----
+`/legal-kit:setup-project` adds the right `.gitignore` entries for a project that
+is a git repository, covering `.legal-kit/`, your own notes, and any work-product
+folders it scaffolds. It asks before touching an existing `.gitignore`.
 
 ## Maintenance
 
-`vault/50-Handbook/Maintenance.md` is the schedule;
-`vault/50-Handbook/Maintenance log.md` records what you last did, and is
-gitignored so it never conflicts on a pull.
-
 | Task | When |
 | --- | --- |
-| `make doctor` | every session where you use the tools |
-| `make update` | weekly, or let `make schedule` do it |
-| ÚOOÚ index | monthly (seconds) |
+| `/legal-kit:doctor` | when something behaves oddly, or after connecting an integration |
+| `/legal-kit:update` | weekly, or let the scheduled job do it |
+| ÚOOÚ index | monthly, seconds |
 | MŽP index, lower-court index | quarterly |
-| `make test-aliases` | every six months, to check every act and CELEX alias still resolves |
-| Re-check the jurisdiction overlay | every six months |
 
-`make update` refreshes only what has actually gone stale, so it is cheap to run
-often and safe to schedule.
+`/legal-kit:update` refreshes only what has actually gone stale, so it is cheap
+to run often and safe to schedule. `/legal-kit:setup` offers to install a weekly
+job that does it for you.
 
----
+A stale mirror of a regulator is worse than none, because it looks current.
 
 ## Troubleshooting
 
-**`make test` fails on one source.** Usually that registry changed its HTML or was
+**the selftest fails on one source.** Usually that registry changed its HTML or was
 having a slow morning. Read the failing check's message before assuming anything
 here is broken; `docs/source-apis.md` documents how each source actually behaves.
 
@@ -437,15 +400,15 @@ engines match exact surface forms, so a four-word query can collapse a large
 result set to zero. The `cz-legal-research` skill has the procedure.
 
 **"The index has not been built yet."** That is a configuration state, not a
-fault. `make update` builds what is missing. `make test` skips the blocks that
+fault. `/legal-kit:update` builds what is missing. the selftest skips the blocks that
 need an index you do not have, so a fresh clone is green.
 
 **The MŽP build seems stuck.** It is not: it waits ten seconds between requests
-because the ministry asks it to, and some attachments are 20 MB. `make status` is
+because the ministry asks it to, and some attachments are 20 MB. `/legal-kit:status` is
 safe to run while it works.
 
 **Node complains about `node:sqlite`.** You are on Node older than 22, or a
-minimal build without SQLite. `make doctor` says which.
+minimal build without SQLite. `/legal-kit:doctor` says which.
 
 ---
 
@@ -461,7 +424,7 @@ Pull requests welcome. Two things make one easy to accept:
    links" passed for months while the tool printed a heading and silently dropped
    every row beneath it, because the assertion tested the heading.
 
-`make test` hits the live registries and takes a couple of minutes. CI
+the selftest hits the live registries and takes a couple of minutes. CI
 deliberately does not: firing nine government sites on every push would be a poor
 way to treat free public infrastructure. CI checks that everything parses, that
 the server starts and registers its tools, and that nothing personal is tracked.
@@ -483,7 +446,7 @@ too if you redistribute. `NOTICE.md` has the detail:
 decisions are excluded from copyright by § 3(a) of Act No. 121/2000 Coll., and EU
 law is published under the Commission's reuse decision. But the indexes you build
 are local copies of live government sites: do not redistribute them, rebuild them.
-That is what `make update` is for.
+That is what `/legal-kit:update` is for.
 
 ## Disclaimer
 

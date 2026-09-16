@@ -1,14 +1,11 @@
 {
   "mcpServers": {
     "lex": {
-      "command": "node",
-      "args": [
-        "mcp-servers/lex/server.js"
-      ],
-      "env": {
-        "LEX_MCP_CACHE_TTL_MS": "43200000",
-        "NODE_NO_WARNINGS": "1"
-      }
+      "type": "stdio",
+      "command": "sh",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/launch.sh"],
+      "title": "lex",
+      "description": "Official Czech and EU primary legal sources: e-Sbirka, EUR-Lex/CELLAR, Nejvyssi spravni soud and the regional administrative courts, Nejvyssi soud, Ustavni soud, the Court of Justice of the EU, Ministry of Justice open data, UOOU, MZP and ARES."
     }
   }
 }

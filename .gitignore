@@ -1,71 +1,16 @@
-# ---------------------------------------------------------------------------
-# Personal. Never commit any of this.
-#
-# This repository is meant to be forked and shared, and its whole point is that
-# you keep real legal work in it. Everything below stays on your machine.
-# `make check-private` verifies that before you push.
-# ---------------------------------------------------------------------------
-
-# Who you are, written by `make setup`
-PROFILE.md
-
-# What you last refreshed, and when
-vault/50-Handbook/Maintenance log.md
-
-# Your own notes. The handbook, the templates and the example playbook are
-# tracked; everything you write yourself is not.
-vault/00-Inbox/*
-vault/10-Topics/*
-vault/20-Instruments/*
-vault/30-Memos/*
-vault/_attachments/*
-!vault/**/.gitkeep
-
-# Your own playbooks, but keep the worked example that ships with the template
-vault/40-Playbooks/*
-!vault/40-Playbooks/.gitkeep
-!vault/40-Playbooks/Researching Czech environmental law.md
-
-# Work product. Folder structure and its README are tracked, contents are not.
-privacy/**
-!privacy/README.md
-!privacy/**/README.md
-!privacy/**/.gitkeep
-contracts/**
-!contracts/README.md
-!contracts/.gitkeep
-ai-governance/**
-!ai-governance/README.md
-!ai-governance/.gitkeep
-
-# Third-party source material you have no right to redistribute:
-# course materials, textbook extracts, case-law collections.
-sources/
-
-# ---------------------------------------------------------------------------
-# Derived. Rebuildable, and far too large to track.
-# ---------------------------------------------------------------------------
-
-# Built indexes. `make update` rebuilds them.
-.data/
-
-# HTTP cache. Safe to delete at any time.
-.cache/
-
+# Dependencies, installed by scripts/launch.sh on first run
 node_modules/
 
-# ---------------------------------------------------------------------------
-# Local configuration and noise
-# ---------------------------------------------------------------------------
-
-.claude/settings.local.json
-vault/.obsidian/workspace*.json
-vault/.obsidian/cache
+# Nothing writable belongs in the plugin: installs are versioned, so an upgrade
+# is a new directory. Indexes, cache and profile live in ~/.legal-kit and
+# ~/.claude/plugins/config/legal-kit instead. These two are here only because
+# this working copy was also the old template.
+.data/
+.cache/
+PROFILE.md
+CLAUDE.md
 
 .DS_Store
-Thumbs.db
-*.swp
-*~
+*.log
 *.bak
 *.bak-*
-*.log

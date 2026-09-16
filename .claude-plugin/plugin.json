@@ -1,0 +1,9 @@
+{
+  "name": "legal-kit",
+  "version": "1.0.0",
+  "description": "Czech and EU legal research read from the official registries, never from memory. Every provision is quoted with its consolidated version and a link. Includes the Supreme Administrative Court and the regional administrative courts, which is where Czech environmental, tax and building law is decided. Run /legal-kit:setup once, then /legal-kit:setup-project in each matter.",
+  "author": { "name": "Petr Chlup", "email": "chlupp@natur.cuni.cz" },
+  "homepage": "https://github.com/ChlupacTheBosmer/legal-kit",
+  "license": "MIT",
+  "keywords": ["legal", "czech", "eu-law", "research", "case-law", "administrative-law", "gdpr"]
+}
