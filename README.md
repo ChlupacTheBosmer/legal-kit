@@ -182,37 +182,73 @@ refuses an obviously English query, and an empty result is always reported as
 
 ## Optional integrations
 
-Neither is required for anything.
+Nothing here is required. The legal research uses only free, unauthenticated
+government registries.
 
-**Zotero**, for commentary: articles, textbooks, regulator PDFs. Legislation and
-case law are cited as links to the registry through `legal_cite`, because a link
-the reader can check beats a bibliography line.
+### Companion plugins
 
-```bash
-export ZOTERO_API_KEY=...        # zotero.org/settings/keys
-export ZOTERO_LIBRARY_ID=...     # your numeric user id, or a group id
-export ZOTERO_LIBRARY_TYPE=user  # or 'group'
-node tools/zotero.mjs collections
+Two plugins from [claude-writing-kit](https://github.com/ChlupacTheBosmer/claude-writing-kit)
+do their half of the job better than the fallbacks bundled here, and legal-kit
+delegates to them when they are present:
+
+```
+/plugin marketplace add ChlupacTheBosmer/claude-writing-kit
+/plugin install gdocs-kit@claude-writing-kit
+/plugin install zotero-kit@claude-writing-kit
 ```
 
-**Google Docs**, for the drafting loop: push a draft into a real document, read
-back the comments colleagues leave with the text each is anchored to, edit the
-commented span, reply and resolve in one call. Setup is three steps, one of them
-a trip to the Google Cloud console:
-[docs/google-docs-workflow.md](docs/google-docs-workflow.md). The token requests
-`drive.file`, not full Drive, so the tool can only touch documents it created or
-you explicitly opened.
+**gdocs-kit** delivers a draft to a Google Doc and revises it from reviewer
+comments, updating the existing Doc so its ID, comment threads and share links
+survive a new version. For a contract reviewed more than once, that history is
+the record of what was agreed and when, and the fallback here cannot preserve it.
 
-`/legal-kit:doctor` reports both, and reports the Google token and the Google
-Python libraries separately, because having one without the other is the
-confusing state people land in.
+**zotero-kit** reads and writes a Zotero library: search, duplicate-safe pushes,
+bibliographies in any CSL style.
 
-**The `claude-for-legal` plugins** are excellent workflow structure and wrong law
-here: they are drafted for United States in-house practice. Their output must be
-run through [docs/jurisdiction-overlay.md](docs/jurisdiction-overlay.md) before
-delivery, and the assistant says what it corrected. Watch for fair use,
-assignment of copyright, work made for hire, at-will employment, discovery and
-punitive damages. None exist in Czech law.
+`/legal-kit:doctor` reports whether each is installed and what it would add.
+`/legal-kit:setup` offers them once during the interview.
+
+**Credentials are shared both ways.** legal-kit reads the Google token and the
+Zotero keys from either family's location, so configuring one makes the other
+work. If you already have a token at `~/.claude_google_token.json`, set
+`GOOGLE_TOKEN_PATH` to it and gdocs-kit will use it rather than authorising
+Google a second time for the same account.
+
+### What legal-kit adds on top
+
+The companions are domain-agnostic, so `legal-kit:legal-delivery` carries the
+rules they cannot know:
+
+- **Every citation goes through `legal_cite` before delivery**, and lands in the
+  Doc as a live link to e-Sbírka or EUR-Lex. A citation that has not been
+  verified does not go in a draft.
+- **Confidentiality is asked, not assumed.** Delivering a client-confidential
+  matter to Google Docs uploads it to Google. That is the lawyer's call, so it
+  gets asked once per project and recorded. `--target docx` produces the file
+  without uploading anything.
+- **A comment changes its own span and nothing else.** In a contract, an
+  unrequested change to a clause nobody commented on is a change to the parties'
+  bargain, and it passes review precisely because nobody was looking at it.
+- **Legislation and case law do not go in Zotero.** They have authoritative,
+  versioned, permanent URLs, and a bibliography entry is strictly worse: it
+  cannot say which consolidated version was read and cannot be clicked. Zotero
+  holds commentary, textbooks, articles and regulator PDFs.
+
+### Without the companions
+
+`tools/gdoc.py` and `tools/zotero.mjs` are bundled fallbacks. They work, and
+`/legal-kit:doctor` will tell you what you are missing by using them. The Google
+helper needs `python3 -m pip install -r tools/requirements.txt` and a token; see
+[docs/google-docs-workflow.md](docs/google-docs-workflow.md).
+
+### claude-for-legal plugins
+
+Excellent workflow structure and wrong law here: they are drafted for United
+States in-house practice. Their output must be run through
+[docs/jurisdiction-overlay.md](docs/jurisdiction-overlay.md) before delivery, and
+the assistant says what it corrected. Watch for fair use, assignment of
+copyright, work made for hire, at-will employment, discovery and punitive
+damages. None exist in Czech law.
 
 ---
 
@@ -257,6 +293,7 @@ skills/
   setup/            the global interview; areas/ holds a block per practice area
   setup-project/    the per-project interview
   cz-legal-research/    the Czech search procedure
+  legal-delivery/       delivery to Google Docs and Zotero, over the companions
   cz-*/             nine Czech-language workflow skills
   doctor/ status/ update/
 

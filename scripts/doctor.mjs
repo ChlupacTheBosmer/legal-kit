@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * `make doctor` — is this workspace able to do its job right now?
+ * `/legal-kit:doctor` — is this workspace able to do its job right now?
  *
  * Reports four things, each with the fix attached rather than left implied:
  *   what is installed, what is reachable, what is configured, what is stale.
@@ -12,7 +12,7 @@ import { join } from "node:path";
 import { homedir } from "node:os";
 import {
   ROOT, exists, nodeCheck, sqliteCheck, npmCheck, pdftotextCheck, pythonCheck, gitCheck,
-  depsCheck, integrationChecks, reachabilityChecks, indexStatus,
+  depsCheck, integrationChecks, companionChecks, reachabilityChecks, indexStatus,
 } from "./env.mjs";
 import { bold, dim, green, yellow, red, cyan, ok, warn, bad, rule } from "./ui.mjs";
 
@@ -50,6 +50,17 @@ report({
 });
 for (const c of await integrationChecks()) report(c);
 
+rule("Companion plugins");
+console.log(dim("  Optional. Each does its half of the job better than the fallback\n  bundled here, and legal-kit delegates to them when they are present.\n"));
+let missingCompanions = 0;
+for (const c of await companionChecks()) {
+  if (c.ok) { ok(`${c.name.padEnd(34)} ${dim(c.version)}`); continue; }
+  missingCompanions++;
+  warn(`${c.name.padEnd(34)} ${dim("not installed")}`);
+  console.log(`        ${dim(c.gives)}`);
+  console.log(`        ${cyan(c.fix)}`);
+}
+
 if (!quick) {
   rule("Official sources");
   console.log(dim("  One request each. All public and unauthenticated.\n"));
@@ -61,7 +72,7 @@ const idx = await indexStatus();
 for (const i of idx) {
   if (!i.built) {
     warn(`${i.label.padEnd(34)} ${dim("not built")}`);
-    console.log(`        ${cyan(i.cmd)}${dim("   (or `make update` to build everything that is missing)")}`);
+    console.log(`        ${cyan(i.cmd)}${dim("   (or /legal-kit:update builds everything missing)")}`);
   } else if (i.stale) {
     warn(`${i.label.padEnd(34)} ${dim(`${i.sizeMb} MB, ${i.ageDays} days old`)}`);
     console.log(`        ${cyan(i.cmd)}${dim(`   (older than the ${i.staleDays}-day refresh interval)`)}`);
@@ -76,7 +87,7 @@ console.log(
 
 rule("");
 if (failed) {
-  console.log(`${red(bold(`${failed} required check failed.`))} Fix the items marked ${red("fail")} above, then run ${cyan("make doctor")} again.\n`);
+  console.log(`${red(bold(`${failed} required check failed.`))} Fix the items marked ${red("fail")} above, then run ${cyan("/legal-kit:doctor")} again.\n`);
   process.exit(1);
 }
 const notBuilt = idx.filter((i) => !i.built).length;
@@ -84,4 +95,7 @@ const stale = idx.filter((i) => i.stale).length;
 console.log(`${green(bold("Everything required is working."))}`);
 if (notBuilt) console.log(`${notBuilt} index(es) not built yet. ${cyan("/legal-kit:update")} builds them.`);
 else if (stale) console.log(`${stale} index(es) are stale. ${cyan("/legal-kit:update")} refreshes them.`);
+if (missingCompanions) {
+  console.log(`${missingCompanions} companion plugin(s) not installed. Everything works without them; delivery and reference work is better with them.`);
+}
 console.log(`\nRun the full end-to-end test with ${cyan("node $CLAUDE_PLUGIN_ROOT/mcp/lex/selftest.js")}.\n`);

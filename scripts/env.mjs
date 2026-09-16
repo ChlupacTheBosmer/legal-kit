@@ -112,14 +112,70 @@ export async function depsCheck() {
   };
 }
 
+/**
+ * Companion plugins from the claude-writing-kit marketplace.
+ *
+ * Both do their half of the job better than the fallbacks bundled here:
+ * gdocs-kit updates an existing Doc in place so comment threads and share
+ * links survive a new version, and zotero-kit renders bibliographies in any
+ * CSL style and pushes references without creating duplicates. When they are
+ * present, legal-kit delegates to them rather than using its own scripts.
+ */
+export const COMPANIONS = [
+  {
+    key: "gdocs-kit",
+    name: "gdocs-kit",
+    gives: "deliver a draft to a Google Doc and revise it from reviewer comments, keeping the Doc ID, its comment threads and every share link",
+    install: "/plugin marketplace add ChlupacTheBosmer/claude-writing-kit && /plugin install gdocs-kit@claude-writing-kit",
+  },
+  {
+    key: "zotero-kit",
+    name: "zotero-kit",
+    gives: "read and write a Zotero library: search, duplicate-safe pushes, bibliographies in any CSL style",
+    install: "/plugin marketplace add ChlupacTheBosmer/claude-writing-kit && /plugin install zotero-kit@claude-writing-kit",
+  },
+];
+
+/** Which companions are installed, by looking in the plugin cache. */
+export async function companionChecks() {
+  const cache = join(homedir(), ".claude", "plugins", "cache");
+  return Promise.all(
+    COMPANIONS.map(async (c) => {
+      // Marketplace directory name is not guaranteed, so search for the plugin.
+      let root = null;
+      for (const mk of ["claude-writing-kit", "writing-kit"]) {
+        const dir = join(cache, mk, c.key);
+        if (await exists(dir)) { root = dir; break; }
+      }
+      return {
+        name: c.name,
+        ok: Boolean(root),
+        version: root ? "installed" : "not installed",
+        optional: true,
+        companion: true,
+        gives: c.gives,
+        fix: c.install,
+      };
+    })
+  );
+}
+
 /** Optional integrations, reported but never required. */
 export async function integrationChecks() {
   const out = [];
 
   // Two separate prerequisites, reported separately: people hit the missing
   // Python libraries long after they thought Google was "set up".
-  const googleToken = join(homedir(), ".claude_google_token.json");
-  const hasToken = await exists(googleToken);
+  // Two families of plugin, two token locations. legal-kit reads both, so that
+  // configuring either one makes the other work rather than asking twice.
+  const googleTokens = [
+    process.env.GOOGLE_TOKEN_PATH,
+    join(homedir(), ".claude", "writing-kit", "google_token.json"),
+    join(homedir(), ".claude_google_token.json"),
+  ].filter(Boolean);
+  let googleAt = null;
+  for (const t of googleTokens) if (await exists(t)) { googleAt = t; break; }
+  const hasToken = Boolean(googleAt);
   let hasLibs = false;
   try {
     await run("python3", ["-c", "import google.oauth2.credentials, googleapiclient.discovery"], { timeout: 20_000 });
@@ -128,7 +184,9 @@ export async function integrationChecks() {
   out.push({
     name: "Google Docs / Drive",
     ok: hasToken && hasLibs,
-    version: hasToken && hasLibs ? "ready" : hasToken ? "token present, Python libraries missing" : "not configured",
+    version: hasToken && hasLibs
+      ? `ready (${googleAt.replace(homedir(), "~")})`
+      : hasToken ? "token present, Python libraries missing" : "not configured",
     optional: true,
     fix: hasToken && !hasLibs
       ? "python3 -m pip install -r tools/requirements.txt"
@@ -137,6 +195,19 @@ export async function integrationChecks() {
 
   let zotero = Boolean(process.env.ZOTERO_API_KEY);
   let zoteroWhere = zotero ? "from the environment" : "";
+  // Same idea as the Google token: read every location either family writes to.
+  if (!zotero) {
+    for (const f of [join(process.cwd(), ".env"), join(homedir(), ".claude", "writing-kit", ".env")]) {
+      try {
+        const body = await readFile(f, "utf8");
+        if (/^\s*ZOTERO_API_KEY\s*=\s*\S/m.test(body)) {
+          zotero = true;
+          zoteroWhere = `from ${f.replace(homedir(), "~")}`;
+          break;
+        }
+      } catch { /* not there */ }
+    }
+  }
   if (!zotero) {
     try {
       const cfg = JSON.parse(await readFile(join(homedir(), ".claude.json"), "utf8"));

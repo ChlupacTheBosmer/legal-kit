@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * `make update` — refresh whatever has gone stale, and nothing else.
+ * `/legal-kit:update` — refresh whatever has gone stale, and nothing else.
  *
  * Each index carries its own refresh interval, chosen from how fast the source
  * actually changes: ÚOOÚ publishes a few items a month, the ministry at least
@@ -98,7 +98,7 @@ if (await exists(logPath)) {
         `| ${row} | ${today} | **${next}** | no |`
       );
     }
-    log = log.replace("## History\n", `## History\n\n- **${today}**: \`make update\` refreshed ${done.join(", ")}.`);
+    log = log.replace("## History\n", `## History\n\n- **${today}**: /legal-kit:update refreshed ${done.join(", ")}.`);
     await writeFile(logPath, log);
     ok("maintenance log updated");
   } catch {

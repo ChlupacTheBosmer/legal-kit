@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * `make schedule` — install or remove a weekly index refresh.
+ * `the weekly refresh` — install or remove a weekly index refresh.
  *
  *   node setup/schedule.mjs install     install the weekly job
  *   node setup/schedule.mjs remove      remove it
@@ -143,7 +143,7 @@ const linuxStatus = async () =>
 
 const unsupported = () => {
   bad(`Scheduling is not automated on ${process.platform}.`);
-  console.log(`        ${dim("Run `make update` by hand, or wire this into whatever your system uses:")}`);
+  console.log(`        ${dim("Run /legal-kit:update by hand, or wire this into whatever your system uses:")}`);
   console.log(`        ${cyan(`cd ${ROOT} && ${process.execPath} setup/update.mjs`)}`);
   process.exit(1);
 };
@@ -157,7 +157,7 @@ if (cmd === "install") {
   if (isMac()) await macInstall();
   else if (isLinux()) await linuxInstall();
   else unsupported();
-  console.log(`\n  Remove it with ${cyan("make unschedule")}.\n`);
+  console.log(`\n  Remove it with ${cyan("node $CLAUDE_PLUGIN_ROOT/scripts/schedule.mjs remove")}.\n`);
 } else if (cmd === "remove") {
   if (isMac()) await macRemove();
   else if (isLinux()) await linuxRemove();
@@ -167,9 +167,9 @@ if (cmd === "install") {
   const s = isMac() ? await macStatus() : isLinux() ? await linuxStatus() : { installed: false };
   if (s.installed) {
     ok(`installed ${dim(s.where)}`);
-    console.log(`\n  Remove it with ${cyan("make unschedule")}.\n`);
+    console.log(`\n  Remove it with ${cyan("node $CLAUDE_PLUGIN_ROOT/scripts/schedule.mjs remove")}.\n`);
   } else {
     warn("not installed");
-    console.log(`\n  Install it with ${cyan("make schedule")}, or just run ${cyan("make update")} when you think of it.\n`);
+    console.log(`\n  Install it with ${cyan("node $CLAUDE_PLUGIN_ROOT/scripts/schedule.mjs install")}, or just run ${cyan("/legal-kit:update")} when you think of it.\n`);
   }
 }

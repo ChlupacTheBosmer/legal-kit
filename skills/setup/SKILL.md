@@ -225,8 +225,50 @@ destroys trust in everything else the profile says.
 - `⚪` configured but not verified, with one line on how to confirm.
 - `✗` not found, with what it costs and how to add it later.
 
+### 0.4 Companion plugins
+
+The same `doctor.mjs` run reports two optional plugins from the
+`claude-writing-kit` marketplace. Report them honestly: each does its half of the
+job better than the fallback bundled here, and legal-kit delegates when they are
+present.
+
+**If both are installed,** say so in one line and move on.
+
+**If either is missing,** offer it once, with what it actually adds, and do not
+push:
+
+> Two optional plugins would improve how work leaves this workspace. Neither is
+> needed for research.
+>
+> - **gdocs-kit**: delivers a draft to a Google Doc and revises it from reviewer
+>   comments, updating the existing Doc so its comment threads and share links
+>   survive a new version. For anything reviewed more than once, that history is
+>   the record of what was agreed and when. legal-kit has a fallback, but it
+>   cannot update a Doc in place.
+> - **zotero-kit**: reads and writes a Zotero library, pushes references without
+>   creating duplicates, and renders a bibliography in any citation style. Useful
+>   for commentary; legislation and case law are cited as links instead.
+>
+> ```
+> /plugin marketplace add ChlupacTheBosmer/claude-writing-kit
+> /plugin install gdocs-kit@claude-writing-kit
+> /plugin install zotero-kit@claude-writing-kit
+> ```
+>
+> Install them later and re-run `/legal-kit:setup --check-integrations`.
+
+**Do not install anything yourself.** Show the lines and let the user decide;
+installing a plugin into someone's account is theirs to run.
+
+**If a credential exists in one family's location but not the other's,** say so,
+because it is the confusing case: a Google token at `~/.claude_google_token.json`
+and gdocs-kit looking in `~/.claude/writing-kit/google_token.json` means one of
+them works and the other reports nothing. legal-kit reads both. Point out that
+`GOOGLE_TOKEN_PATH` makes gdocs-kit read the existing one rather than authorising
+again.
+
 Close with: "None of this blocks anything. Re-run
-`/legal-kit:setup --check-integrations` after you connect something."
+`/legal-kit:setup --check-integrations` after you connect or install something."
 
 ---
 

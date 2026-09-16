@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * `make status` — a one-screen answer to "what state is this workspace in?"
+ * `/legal-kit:status` — a one-screen answer to "what state is this workspace in?"
  *
  * Deliberately cheap: no network, no selftest. It reads what is on disk, so it
  * is safe to run while a long background index build is still going.

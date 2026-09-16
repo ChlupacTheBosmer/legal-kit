@@ -36,6 +36,22 @@ async function credentials() {
       type: process.env.ZOTERO_LIBRARY_TYPE,
     };
   }
+  // zotero-kit and academic-writing-kit keep their keys in a .env. Read it too,
+  // so configuring either family serves both rather than asking twice.
+  for (const f of [`${process.cwd()}/.env`, `${homedir()}/.claude/writing-kit/.env`]) {
+    try {
+      const env = {};
+      for (const line of (await readFile(f, "utf8")).split("\n")) {
+        const t = line.trim();
+        if (!t || t.startsWith("#") || !t.includes("=")) continue;
+        const i = t.indexOf("=");
+        env[t.slice(0, i).trim()] = t.slice(i + 1).trim().replace(/^['"]|['"]$/g, "");
+      }
+      if (env.ZOTERO_API_KEY) {
+        return { key: env.ZOTERO_API_KEY, lib: env.ZOTERO_LIBRARY_ID, type: env.ZOTERO_LIBRARY_TYPE };
+      }
+    } catch { /* not there */ }
+  }
   try {
     const cfg = JSON.parse(await readFile(`${homedir()}/.claude.json`, "utf8"));
     const env = cfg.mcpServers?.zotero?.env;

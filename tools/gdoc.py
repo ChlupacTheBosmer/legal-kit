@@ -21,22 +21,50 @@ refresh token), the same file the scientific-writer project uses. Nothing is
 sent anywhere except googleapis.com.
 """
 
-import sys, json, pathlib, argparse, re
+import os, sys, json, pathlib, argparse, re
 
-sys.path.insert(0, "/Users/chlup/Library/Python/3.11/lib/python/site-packages")
-
-from google.oauth2.credentials import Credentials
-from google.auth.transport.requests import Request
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload
+try:
+    from google.oauth2.credentials import Credentials
+    from google.auth.transport.requests import Request
+    from googleapiclient.discovery import build
+    from googleapiclient.http import MediaFileUpload
+except ImportError:
+    sys.exit(
+        "Missing Python dependencies for the Google Docs helper.\n"
+        "  python3 -m pip install -r tools/requirements.txt\n"
+        "Nothing else in legal-kit needs them."
+    )
 
 SCOPES = ["https://www.googleapis.com/auth/drive", "https://www.googleapis.com/auth/documents"]
-TOKEN_PATH = pathlib.Path.home() / ".claude_google_token.json"
+def _token_path():
+    """Where the Google token lives.
+
+    Two plugin families write one, in different places. Read whichever exists,
+    so that configuring either makes both work rather than asking the user to
+    authorise Google twice for the same account.
+    """
+    env = os.environ.get("GOOGLE_TOKEN_PATH")
+    if env:
+        return pathlib.Path(env).expanduser()
+    for candidate in (
+        pathlib.Path.home() / ".claude" / "writing-kit" / "google_token.json",  # gdocs-kit
+        pathlib.Path.home() / ".claude_google_token.json",                      # legal-kit
+    ):
+        if candidate.is_file():
+            return candidate
+    return pathlib.Path.home() / ".claude_google_token.json"
+
+
+TOKEN_PATH = _token_path()
 
 
 def services():
     if not TOKEN_PATH.exists():
-        sys.exit(f"No Google token at {TOKEN_PATH}. See docs/google-docs-workflow.md.")
+        sys.exit(
+            f"No Google token at {TOKEN_PATH}.\n"
+            "Run: python3 tools/google-auth.py <client_secret.json>\n"
+            "Or, if gdocs-kit is installed, /gdocs-kit:setup writes one this reads too."
+        )
     creds = Credentials.from_authorized_user_file(str(TOKEN_PATH), SCOPES)
     if creds.expired and creds.refresh_token:
         creds.refresh(Request())

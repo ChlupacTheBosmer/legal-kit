@@ -276,6 +276,26 @@ thinking:
 When a Czech document is drafted, summarise it in English so the owner can check
 it without re-reading the Czech.
 
+## Delivering a document
+
+When work leaves this workspace as a document, two rules bind in addition to
+everything above.
+
+**Legal authority is cited as a live hyperlink to the official source.** Drive
+converts markdown natively, so `[§ 58 of Act No. 121/2000 Coll.](https://www.e-sbirka.cz/eli/cz/sb/2000/121/2025-07-01)`
+becomes a real link the reader can click and check. For legislation and case law
+this replaces a bibliography entry, because a bibliography entry cannot say which
+consolidated version was read and cannot be clicked. **Run `legal_cite` before
+writing any citation into a document**; one that has not been through it does not
+go in a draft.
+
+**Zotero is for the other half**: commentary, textbooks, articles, regulator PDFs.
+Those are cited author-year. Legislation and case law are not kept there.
+
+The delivery and revision loop itself, including what to do with reviewer
+comments and when uploading a confidential matter needs asking first, is the
+`legal-kit:legal-delivery` skill.
+
 ## Answer format
 
 Substantive answers are written as a **legal report**, not a chat reply, and in
